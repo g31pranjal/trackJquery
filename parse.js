@@ -2,18 +2,26 @@ var https = require('https');
 var fs = require('fs');
 var nano = require('nano')('http://localhost:5984');
 
+var dbRepo; 
+
+var dbCommon;
+
 (function() {
-	//checkRepo();
+	checkRepo();
 	connectCouch();
 })();
 
 
 function connectCouch() {
-	nano.db.create('the_first', function(err, body) {
-		if(!err)
-			console.log("Done !");
-	})
+	nano.db.create('track_repo', function(err, body){;});
+	dbRepo = nano.use('track_repo');
+	
+	nano.db.create('track_issues', function(err, body){;});
+	dbCommon = nano.use('track_common');
+	
 }
+
+
 
 
 function checkRepo(currentpage) {
@@ -51,6 +59,10 @@ function checkRepo(currentpage) {
 					var repo_fullname = obj[i].full_name;
 					var repo_desc = obj[i].description;
 					console.log(repo_id+" ... "+repo_fullname+" ... "+repo_desc);
+					dbRepo.insert({ git_id : repo_id, name : repo_fullname, desc : repo_desc }, repo_fullname, function(err, body) {
+						if(!err) 
+							console.log("Success !!");
+					});
 				}
 				if(len == page_limit) {
 					checkRepo(currentpage + 1);

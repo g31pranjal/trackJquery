@@ -1,0 +1,49 @@
+48
+45547 ... jquery/sizzle ... A sizzlin' hot selector engine.
+63557 ... jquery/jquery-mousewheel ... A jQuery plugin that adds cross-browser mouse wheel support.
+121050 ... jquery/testswarm ... Distributed continuous integration testing for JavaScript.
+167174 ... jquery/jquery ... jQuery JavaScript Library
+259691 ... jquery/qunit ... An easy-to-use JavaScript Unit Testing framework.
+260394 ... jquery/jquery-color ... jQuery plugin for color manipulation and animation support.
+478996 ... jquery/jquery-ui ... The official jQuery user interface library.
+907410 ... jquery/jquery-mobile ... jQuery Mobile Framework
+946945 ... jquery/globalize ... A JavaScript library for internationalization and localization that leverages the official Unicode CLDR JSON data
+1064955 ... jquery/learn.jquery.com ... jQuery Learning Center web site content
+1449991 ... jquery/jquery-wp-content ... WordPress themes and plugins for the jQuery sites
+2551451 ... jquery/themeroller.jquerymobile.com ... Theme Roller site for jQuery Mobile
+2606544 ... jquery/standards ... Giving web developers a voice in the standards process
+2833537 ... jquery/esprima ... ECMAScript parsing infrastructure for multipurpose analysis
+2886401 ... jquery/plugins.jquery.com ... The jQuery Plugins site
+4015228 ... jquery/qunitjs.com ... QUnit web site content
+4015965 ... jquery/api.jquery.com ... API documentation for jQuery Core
+4249543 ... jquery/jquery.org ... jQuery Foundation web site content
+4348524 ... jquery/jquery.com ... jQuery web site content
+4443787 ... jquery/api.jqueryui.com ... API documentation for jQuery UI
+4551542 ... jquery/api.jquerymobile.com ... API documentation for jQuery Mobile
+4559355 ... jquery/api.qunitjs.com ... API documentation for QUnit
+4679498 ... jquery/jquerymobile.com ... jQuery Mobile web site content
+4700699 ... jquery/jqueryui.com ... jQuery UI web site content
+4702006 ... jquery/grunt-jquery-content ... 
+5017825 ... jquery/download.jqueryui.com ... Download Builder for jQuery UI
+5532217 ... jquery/PEP ... Pointer Events Polyfill: a unified event system for the web platform
+5999890 ... jquery/2012-dev-summit ... Information regarding the 2012 Developer Summit in DC
+6509620 ... jquery/brand.jquery.org ... Information on jQuery's branding
+6538922 ... jquery/jquery-migrate ... APIs and features removed from jQuery core
+6904942 ... jquery/jquery-simulate ... jQuery Event Unit Testing Helpers
+7009741 ... jquery/contribute.jquery.org ... Developer documentation common to all jQuery projects
+7538811 ... jquery/irc.jquery.org ... jQuery Foundation IRC channels and logs site content
+7681660 ... jquery/blog.jquery.com-theme ... Themes for blogs during transition period to jquery-wp-content.
+9116821 ... jquery/meetings.jquery.org ... Calendar and minutes of public jQuery team meetings
+11664365 ... jquery/codeorigin.jquery.com ... jQuery CDN
+14587821 ... jquery/jquery-release ... Release automation script for jQuery projects
+15234704 ... jquery/demos.jquerymobile.com ... jQuery Mobile demo site
+17913796 ... jquery/jquery.github.io ... A centralized showcase of all jQuery projects
+23225540 ... jquery/events.jquery.org ... jQuery Events & Conferences web site content
+24654284 ... jquery/globalizejs.com ... Globalize web site content
+24654304 ... jquery/api.globalizejs.com ... API documentation for Globalize
+26022940 ... jquery/css-chassis ... 
+26816292 ... jquery/content ... Content Team 
+28402826 ... jquery/jquery-license ... jQuery Foundation License Verification
+28825109 ... jquery/jquery-dist ... Distribution repo for jQuery Core releases
+28825229 ... jquery/jquery-compat-dist ... Distribution repo for jQuery Core Compat releases
+30601246 ... jquery/gsoc ... Home for the jQuery Foundations ideas list for Google Summer of Code 2015
