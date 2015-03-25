@@ -8,9 +8,11 @@ var dbCommon;
 (function() {
 	connectCouch();
 	checkRepo();
+	fillCommon();
 })();
 
 
+//connects to the couchDb databases for storing data
 function connectCouch() {
 	nano.db.create('track_repo', function(err, body){;});
 	dbRepo = nano.use('track_repo');
@@ -19,7 +21,7 @@ function connectCouch() {
 	dbCommon = nano.use('track_common');
 }
 
-
+//Main function for repository scrapping
 function checkRepo(currentpage) {
 	var page_limit = 100;
 	if(currentpage == undefined){
@@ -47,8 +49,7 @@ function checkRepo(currentpage) {
 			//startReforming();
 			var obj = JSON.parse(dat);
 			var len = obj.length;
-			console.log(len);
-
+		
 			if(len > 0) {
 				for(var i=0;i<len;i++) {
 					var repo_id = obj[i].id;
@@ -66,11 +67,10 @@ function checkRepo(currentpage) {
 	req.end();
 }
 
+// Checks whether a particular repository is in the dbRepo otherwise, adds it.
 function fixRepo(repo_id, repo_fullname, repo_desc) {
 	dbRepo.get(repo_fullname, function(err, data, re) {
-		//console.log(data);
 		if(data == undefined) {
-			console.log(repo_fullname);
 			dbRepo.insert({ git_id : repo_id, name : repo_fullname, desc : repo_desc }, repo_fullname, function(err, body) {
 				if(!err) 
 					console.log("Success !!");
@@ -79,18 +79,17 @@ function fixRepo(repo_id, repo_fullname, repo_desc) {
 	});
 }
 
-
-function startReforming() {
-	var obj = JSON.parse(dat);
-	var log = obj[0].id;
-	fs.appendFile('/home/in-arena/localhost/nodeJS/content.txt',"\n"+log,function(err){
-		if(err)
-			console.log("error sighted !");
-		else
-			console.log("Done !!");
-	})
+// Gets the list of repositories in dbRepo containing key and id. 
+function fillCommon() {
+	var repoList;
+	var len;
+	dbRepo.list(function(err, data) {
+		repoList = data.rows;
+		len = data.total_rows;	
+		continueScrap(len, repoList);
+	});
 }
 
-dbRepo.get('jquery/sizzle', function(err,data) {
-	// console.log(data);
-});
+function continueScrap(len, repoList) {
+	for(var i=0)
+}
