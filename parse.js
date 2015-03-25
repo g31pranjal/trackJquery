@@ -91,7 +91,7 @@ function fillCommon() {
 }
 
 function continueScrap(repo,currentpage) {
-	var page_limit = 4;
+	var page_limit = 20;
 
 	if(currentpage == undefined || currentpage == 0){
 		var pth = '/repos/'+repo.id+'/issues?state=all&page=1&per_page='+page_limit+'&access_token=dabcd530d821ada1073be24d36b6c92d829457e8';
@@ -107,8 +107,6 @@ function continueScrap(repo,currentpage) {
 	  headers: {'user-agent' : 'g31pranjal'}
 	};
 
-	console.log(pth);
-
 	var dat = "";
 	  
 	var req = https.request(options, function(res) {
@@ -120,26 +118,27 @@ function continueScrap(repo,currentpage) {
 			
 			var obj = JSON.parse(dat);
 			var len = obj.length;
-			console.log(len);
 			
 			if(len > 0) {
 				for(var i=0;i<len;i++) {
 					var is={};
+					is.repo = repo.id;
 					is.id = obj[i].id;
 					is.number = obj[i].number;
 					is.title = obj[i].title;
 					is.user = {};
 					is.user.id = obj[i].user.id;
 					is.user.login = obj[i].user.login;
-					if(obj[i].pull_request ) {
-						is.type = 3;
+					is.created_at = obj[i].created_at;
+					is.updated_at = obj[i].updated_at;
+					is.body = obj[i].body;
+					if(obj[i].pull_request) {
+						scrapPullRequest(is);
 					}
 					else {
-						is.type = 1;
+						scrapIssue(is);
 					}
 
-					console.log(is);
-				
 					//fixRepo(repo_id, repo_fullname, repo_desc);
 				}
 				/*
@@ -153,4 +152,47 @@ function continueScrap(repo,currentpage) {
 		});
 	});
 	req.end();
+}
+
+function scrapIssue(obj) {
+	var pth = '/repos/'+obj.repo+'/issues/'+obj.number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
+	
+	var options = {
+	  hostname: 'api.github.com',
+	  path: pth,
+	  method: 'GET',
+	  headers: {'user-agent' : 'g31pranjal'}
+	};
+
+	var dat = "";
+	  
+	var req = https.request(options, function(res) {
+		res.setEncoding('utf-8');
+		res.on('data',function(e){
+			dat += e;
+		});
+		res.on('end',function() {
+			var obj_e = JSON.parse(dat);
+			if(obj_e.state == 'closed') {
+				obj.type = 2;
+				obj.state = 'closed';
+				obj.closed_at = obj_e.closed_at;
+				obj.closed_by = {};
+				obj.closed_by.id = obj_e.closed_by.id;
+				obj.closed_by.login = obj_e.closed_by.login;
+			}
+			else {
+				obj.type = 1;
+				obj.state = 'open';
+			}
+
+			console.log(obj);
+		});
+	});
+	req.end();
+}
+
+
+function scrapPullRequest(obj) {
+
 }
