@@ -86,10 +86,71 @@ function fillCommon() {
 	dbRepo.list(function(err, data) {
 		repoList = data.rows;
 		len = data.total_rows;	
-		continueScrap(len, repoList);
+		continueScrap(repoList[44],0);
 	});
 }
 
-function continueScrap(len, repoList) {
-	for(var i=0)
+function continueScrap(repo,currentpage) {
+	var page_limit = 4;
+
+	if(currentpage == undefined || currentpage == 0){
+		var pth = '/repos/'+repo.id+'/issues?state=all&page=1&per_page='+page_limit+'&access_token=dabcd530d821ada1073be24d36b6c92d829457e8';
+		currentpage = 0;
+	}
+	else 
+		var pth = '/repos/'+repo.id+'/issues?state=all&page='+(currentpage + 1)+'&per_page='+page_limit+'&access_token=dabcd530d821ada1073be24d36b6c92d829457e8';
+
+	var options = {
+	  hostname: 'api.github.com',
+	  method: 'GET',
+	  path : pth, 
+	  headers: {'user-agent' : 'g31pranjal'}
+	};
+
+	console.log(pth);
+
+	var dat = "";
+	  
+	var req = https.request(options, function(res) {
+		res.setEncoding('utf-8');
+		res.on('data',function(e){
+			dat += e;
+		});
+		res.on('end',function() {
+			
+			var obj = JSON.parse(dat);
+			var len = obj.length;
+			console.log(len);
+			
+			if(len > 0) {
+				for(var i=0;i<len;i++) {
+					var is={};
+					is.id = obj[i].id;
+					is.number = obj[i].number;
+					is.title = obj[i].title;
+					is.user = {};
+					is.user.id = obj[i].user.id;
+					is.user.login = obj[i].user.login;
+					if(obj[i].pull_request ) {
+						is.type = 3;
+					}
+					else {
+						is.type = 1;
+					}
+
+					console.log(is);
+				
+					//fixRepo(repo_id, repo_fullname, repo_desc);
+				}
+				/*
+				if(len == page_limit) {
+					checkRepo(currentpage + 1);
+				}
+				*/
+			
+			}
+			
+		});
+	});
+	req.end();
 }
