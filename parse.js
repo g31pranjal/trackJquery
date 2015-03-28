@@ -1,6 +1,7 @@
 var https = require('https');
 var fs = require('fs');
 var nano = require('nano')('http://localhost:5984');
+var github = require('github-request');
 
 var dbRepo; 
 var dbCommon;
@@ -26,9 +27,157 @@ function fillCommon() {
 	dbRepo.list(function(err, data) {
 		repoList = data.rows;
 		len = data.total_rows;	
-		continueScrap(repoList[44],0);
+		//continueScrap(repoList[44],0);
+		getHeadNumber(repoList[44]);
 	});
 }
+
+
+function getHeadNumber(repo) {
+	var page_limit = 1;
+	var pth = '/repos/'+repo.id+'/issues?per_page='+page_limit+'&access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
+
+	var options = {
+    	path: pth
+	};
+
+	github.request(options, function(error, repos) {
+    	if(!error) {
+    		var obj = repos;
+    		var num =  obj[0].number;
+    		startScrapRepo(repo.id,num);
+    	}
+	});	
+}
+
+
+
+function startScrapRepo(repo,head) {
+	for(var i=head-51;i>=head-100;i--) {
+		scrapOne(repo,i);
+	}
+}
+
+
+function scrapOne(repo, number) {
+	var pth = '/repos/'+repo+'/issues/'+number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
+	
+	var options = {
+	  path: pth,
+	};
+
+	var is = {};
+
+	github.request(options, function(error, repos) {
+    	if(!error) {
+    		var obj = repos;
+    		
+			is.repo = repo;
+			is.id = obj.id;
+			is.number = obj.number;
+			is.title = obj.title;
+			is.user = {};
+			is.user.id = obj.user.id;
+			is.user.login = obj.user.login;
+			is.created_at = obj.created_at;
+			is.updated_at = obj.updated_at;
+			is.body = obj.body;
+			is.labels = [];
+			for(var i=0;i<obj.labels.length;i++) {
+				is.labels[i] = { name : obj.labels[i].name };
+			}
+			is.comments = obj.comments;
+			is.state = obj.state;
+			is.type = 11;
+
+			if(obj.state == 'closed') {
+				is.type += 1;
+				is.closed_at = obj.closed_at;
+				if(obj.closed_by != null) {
+					is.closed_by = {};
+					is.closed_by.id = obj.closed_by.id;
+					is.closed_by.login = obj.closed_by.login;
+				}
+				else 
+					is.closed_by = null
+			}
+			else {
+				is.closed_by = null;
+				is.closed_at = null;
+			}
+
+			if(obj.pull_request != null) {
+				var pth = '/repos/'+repo+'/pulls/'+number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
+	
+				var options = {
+				  path: pth,
+				};
+
+				github.request(options, function(error, data) {
+					if(!error) {
+						var obj = data;
+						is.pull_id = obj.id;
+						is.type += 10;
+						is.commits = obj.commits;
+						is.changed_files = obj.changed_files;
+						
+						is.base = {};
+						is.base.label = obj.base.label;
+						is.base.ref = obj.base.ref;
+						is.base.sha = obj.base.sha;
+						is.base.user = {};
+						is.base.user.id = obj.base.user.id;
+						is.base.user.login = obj.base.user.login;
+						
+						is.head = {};
+						is.head.label = obj.head.label;
+						is.head.ref = obj.head.ref;
+						is.head.sha = obj.head.sha;
+						is.head.user = {};
+						is.head.user.id = obj.head.user.id;
+						is.head.user.login = obj.head.user.login;
+						
+						if(obj.merged) {
+							is.merged = obj.merged;
+							is.type += 1;
+							is.merged_by = {};
+							is.merged_by.id = obj.merged_by.id;
+							is.merged_by.login = obj.merged_by.login;
+							is.merged_at = obj.merged_at;
+						}
+						else {
+							is.merged = obj.merged;
+						}
+
+						console.log(is.number);
+
+					}
+				});
+			    
+			}
+			else {
+				console.log(is.number);
+			}
+
+
+		
+				
+    	}
+    	
+	});
+
+
+
+
+
+
+
+	
+
+}
+
+
+
 
 function continueScrap(repo,currentpage) {
 	var page_limit = 20;
@@ -94,43 +243,7 @@ function continueScrap(repo,currentpage) {
 	req.end();
 }
 
-function scrapIssue(obj) {
-	var pth = '/repos/'+obj.repo+'/issues/'+obj.number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
-	
-	var options = {
-	  hostname: 'api.github.com',
-	  path: pth,
-	  method: 'GET',
-	  headers: {'user-agent' : 'g31pranjal'}
-	};
 
-	var dat = "";
-	  
-	var req = https.request(options, function(res) {
-		res.setEncoding('utf-8');
-		res.on('data',function(e){
-			dat += e;
-		});
-		res.on('end',function() {
-			var obj_e = JSON.parse(dat);
-			if(obj_e.state == 'closed') {
-				obj.type = 2;
-				obj.state = 'closed';
-				obj.closed_at = obj_e.closed_at;
-				obj.closed_by = {};
-				obj.closed_by.id = obj_e.closed_by.id;
-				obj.closed_by.login = obj_e.closed_by.login;
-			}
-			else {
-				obj.type = 1;
-				obj.state = 'open';
-			}
-
-			console.log(obj);
-		});
-	});
-	req.end();
-}
 
 function scrapPullRequest(obj) {
 	var pth = '/repos/'+obj.repo+'/pulls/'+obj.number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
@@ -186,10 +299,10 @@ function scrapClosedPullRequest(obj) {
 	var pth = '/repos/'+obj.repo+'/issues/'+obj.number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
 	
 	var options = {
-	  hostname: 'api.github.com',
-	  path: pth,
-	  method: 'GET',
-	  headers: {'user-agent' : 'g31pranjal'}
+	  	hostname: 'api.github.com',
+	  	path: pth,
+	  	method: 'GET',
+	  	headers: {'user-agent' : 'g31pranjal'}
 	};
 
 	var dat = "";
