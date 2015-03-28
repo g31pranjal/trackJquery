@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "github": "^0.2.3",
+    "github-request": "^1.2.3",
     "nano": "^6.1.2"
   }
 }

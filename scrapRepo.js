@@ -1,6 +1,7 @@
 var https = require('https');
 var fs = require('fs');
 var nano = require('nano')('http://localhost:5984');
+var github = require('github-request');
 
 var dbRepo; 
 var dbCommon;
@@ -8,7 +9,7 @@ var dbCommon;
 (function() {
 	connectCouch();
 	checkRepo();
-	fillCommon();
+	//fillCommon();
 })();
 
 
@@ -23,6 +24,7 @@ function connectCouch() {
 
 //Main function for repository scrapping
 function checkRepo(currentpage) {
+
 	var page_limit = 100;
 	if(currentpage == undefined){
 		var pth = '/orgs/jquery/repos?page=1&per_page='+page_limit+'&access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
@@ -32,22 +34,12 @@ function checkRepo(currentpage) {
 		var pth = '/orgs/jquery/repos?page='+(currentpage+1)+'&per_page='+page_limit+'&access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
 
 	var options = {
-	  hostname: 'api.github.com',
-	  path: pth,
-	  method: 'GET',
-	  headers: {'user-agent' : 'g31pranjal'}
+    	path: pth
 	};
 
-	var dat = "";
-	  
-	var req = https.request(options, function(res) {
-		res.setEncoding('utf-8');
-		res.on('data',function(e){
-			dat += e;
-		});
-		res.on('end',function() {
-			//startReforming();
-			var obj = JSON.parse(dat);
+	github.request(options, function(error, repos) {
+    	if(!error) {
+    		var obj = repos;
 			var len = obj.length;
 		
 			if(len > 0) {
@@ -62,9 +54,8 @@ function checkRepo(currentpage) {
 					checkRepo(currentpage + 1);
 				}
 			}
-		});
+    	}
 	});
-	req.end();
 }
 
 // Checks whether a particular repository is in the dbRepo otherwise, adds it.
@@ -73,7 +64,7 @@ function fixRepo(repo_id, repo_fullname, repo_desc) {
 		if(data == undefined) {
 			dbRepo.insert({ git_id : repo_id, name : repo_fullname, desc : repo_desc }, repo_fullname, function(err, body) {
 				if(!err) 
-					console.log("Success !!");
+					console.log("... Inserted/Updated #"+repo_id+" : "+repo_fullname);
 			});
 		}
 	});
