@@ -11,13 +11,20 @@ var dbCommon;
 	fillCommon();
 })();
 
+
 //connects to the couchDb databases for storing data
 function connectCouch() {
 	nano.db.create('track_repo', function(err, body){;});
 	dbRepo = nano.use('track_repo');
-	
+
 	nano.db.create('track_issues', function(err, body){;});
 	dbCommon = nano.use('track_issues');
+}
+
+function toTimestamp(sample) {
+	var date = sample.substring(0,10).split("-");
+	var time = sample.substring(11,19).split(":");
+	return (Date.UTC(date[0], date[1], date[2], time[0], time[1], time[2])/1000);
 }
 
 // Choose a repository for fetching data
@@ -52,7 +59,7 @@ function getHeadNumber(repo) {
 
 // Calculates no. of new Issue/PR not in database and initiates their fetching
 function startScrapRepo(repo,head) {
-	for(var i=head-290;i>=head-325;i--) {
+	for(var i=head-298;i>=1;i--) {
 		console.log("fetching issue #"+i);
 		scrapOne(repo,i);
 	}
@@ -79,8 +86,8 @@ function scrapOne(repo, number) {
 			is.user = {};
 			is.user.id = obj.user.id;
 			is.user.login = obj.user.login;
-			is.created_at = obj.created_at;
-			is.updated_at = obj.updated_at;
+			is.created_at = toTimestamp(obj.created_at);
+			is.updated_at = toTimestamp(obj.updated_at);
 			is.body = obj.body;
 			is.labels = [];
 			for(var i=0;i<obj.labels.length;i++) {
@@ -92,7 +99,7 @@ function scrapOne(repo, number) {
 
 			if(obj.state == 'closed') {
 				is.type += 1;
-				is.closed_at = obj.closed_at;
+				is.closed_at = toTimestamp(obj.closed_at);
 				if(obj.closed_by != null) {
 					is.closed_by = {};
 					is.closed_by.id = obj.closed_by.id;
@@ -147,7 +154,7 @@ function scrapOne(repo, number) {
 							}
 							else 
 								is.merged_by = null
-							is.merged_at = obj.merged_at;
+							is.merged_at = toTimestamp(obj.merged_at);
 						}
 						else {
 							is.merged = obj.merged;

@@ -14,3 +14,7 @@
 
 
 - [ ] Writing supplementary functions to enhance flow in script
+
+
+----
+Convert date time in GMT to Unix TimeStamp

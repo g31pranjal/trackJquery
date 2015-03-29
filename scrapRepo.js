@@ -2,14 +2,16 @@ var https = require('https');
 var fs = require('fs');
 var nano = require('nano')('http://localhost:5984');
 var github = require('github-request');
+var dbConnect = require('./dbConnect.js');
 
 var dbRepo; 
 var dbCommon;
 
 (function() {
-	connectCouch();
+	dbRepo = dbConnect.connectRepoList();
+	dbCommon = dbConnect.connectIssuesPR();
+	
 	checkRepo();
-	//fillCommon();
 })();
 
 
@@ -67,5 +69,7 @@ function fixRepo(repo_id, repo_fullname, repo_desc) {
 					console.log("... Inserted/Updated #"+repo_id+" : "+repo_fullname);
 			});
 		}
+		else 
+			console.log("... Document _id:"+repo_fullname+" already exists !");
 	});
 }
