@@ -23,6 +23,16 @@ var docType = {
            "map": "function(doc) {\n  if(doc.type == 23)\n\temit(doc.id, doc)\n}"
        }
    }
+}; 
+
+var docNumber = {
+   "_id": "_design/docNumber",
+   "language": "javascript",
+   "views": {
+       "trivial": {
+           "map": "function(doc) {\n  if(doc.number)\n\temit(doc.number, doc)\n}"
+       }
+   }
 };
 
 
@@ -71,6 +81,10 @@ function initializeIssuesPR() {
 			dbloc.insert(docType, function(err, body) {
 				if(!err)
 					console.log("... Created _design view : docType");
+			});
+			dbloc.insert(docNumber, function(err, body) {
+				if(!err)
+					console.log("... Created _design view : docNumber");
 			});
 		}
 	});

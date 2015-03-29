@@ -10,7 +10,6 @@ var dbCommon;
 (function() {
 	dbRepo = dbConnect.connectRepoList();
 	dbCommon = dbConnect.connectIssuesPR();
-	
 	checkRepo();
 })();
 

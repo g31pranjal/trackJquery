@@ -2,12 +2,14 @@ var https = require('https');
 var fs = require('fs');
 var nano = require('nano')('http://localhost:5984');
 var github = require('github-request');
+var dbConnect = require('./dbConnect.js');
 
 var dbRepo; 
-var dbCommon;
+var dbIssuesPR;
 
 (function() {
-	connectCouch();
+	dbRepo = dbConnect.connectRepoList();
+	dbIssuesPR = dbConnect.connectIssuesPR();
 	fillCommon();
 })();
 
@@ -18,7 +20,7 @@ function connectCouch() {
 	dbRepo = nano.use('track_repo');
 
 	nano.db.create('track_issues', function(err, body){;});
-	dbCommon = nano.use('track_issues');
+	dbIssuesPR = nano.use('track_issues');
 }
 
 function toTimestamp(sample) {
@@ -52,14 +54,21 @@ function getHeadNumber(repo) {
     	if(!error) {
     		var obj = repos;
     		var num =  obj[0].number;
-    		startScrapRepo(repo.id,num);
+    		dbIssuesPR.view('docNumber','trivial', { descending : true, limit : 1}, function(err, body) {
+    			if(body.rows.length == 0)
+    				var localHead = 0
+    			else
+    				var localHead = parseInt(body.rows[0].key);
+    			
+    			startScrapRepo(repo.id,num,localHead);
+    		});
     	}
 	});	
 }
 
 // Calculates no. of new Issue/PR not in database and initiates their fetching
-function startScrapRepo(repo,head) {
-	for(var i=head-298;i>=1;i--) {
+function startScrapRepo(repo,head,localHead) {
+	for(var i=head;i>localHead;i--) {
 		console.log("fetching issue #"+i);
 		scrapOne(repo,i);
 	}
@@ -182,9 +191,9 @@ function scrapOne(repo, number) {
 function fixIssuePR(obj) {
 	var name = String(obj.id);
 	
-	dbCommon.get(name, function(err, data, re) {
+	dbIssuesPR.get(name, function(err, data, re) {
 		if(data == undefined) {
-			dbCommon.insert(obj, name, function(err, body) {
+			dbIssuesPR.insert(obj, name, function(err, body) {
 				if(!err) 
 					console.log("... Inserted/Updated #"+obj.id+" : ");
 			});

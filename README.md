@@ -17,4 +17,5 @@
 
 
 ----
-Convert date time in GMT to Unix TimeStamp
+* Convert date time in GMT to Unix TimeStamp
+* Calculate difference b/w latest Issue/PR on Github and latest Issue/PR in database, and fetch only   new Issues/PR
