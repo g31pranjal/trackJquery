@@ -17,7 +17,7 @@ function connectCouch() {
 	dbRepo = nano.use('track_repo');
 	
 	nano.db.create('track_issues', function(err, body){;});
-	dbCommon = nano.use('track_common');
+	dbCommon = nano.use('track_issues');
 }
 
 // Choose a repository for fetching data
@@ -52,7 +52,8 @@ function getHeadNumber(repo) {
 
 // Calculates no. of new Issue/PR not in database and initiates their fetching
 function startScrapRepo(repo,head) {
-	for(var i=head;i>=head-10;i--) {
+	for(var i=head-290;i>=head-325;i--) {
+		console.log("fetching issue #"+i);
 		scrapOne(repo,i);
 	}
 }
@@ -139,23 +140,27 @@ function scrapOne(repo, number) {
 						if(obj.merged) {
 							is.merged = obj.merged;
 							is.type += 1;
-							is.merged_by = {};
-							is.merged_by.id = obj.merged_by.id;
-							is.merged_by.login = obj.merged_by.login;
+							if(obj.merged_by != null) {
+								is.merged_by = {};
+								is.merged_by.id = obj.merged_by.id;
+								is.merged_by.login = obj.merged_by.login;
+							}
+							else 
+								is.merged_by = null
 							is.merged_at = obj.merged_at;
 						}
 						else {
 							is.merged = obj.merged;
 						}
 
-						console.log(is);console.log();console.log();
+						fixIssuePR(is);
 
 					}
 				});
 			    
 			}
 			else {
-				console.log(is);console.log();console.log();
+				fixIssuePR(is);
 			}
 
 
@@ -167,13 +172,16 @@ function scrapOne(repo, number) {
 }
 
 // Checks whether a particular repository is in the dbRepo otherwise, adds it.
-function fixRepo(repo_id, repo_fullname, repo_desc) {
-	dbRepo.get(repo_fullname, function(err, data, re) {
+function fixIssuePR(obj) {
+	var name = String(obj.id);
+	
+	dbCommon.get(name, function(err, data, re) {
 		if(data == undefined) {
-			dbRepo.insert({ git_id : repo_id, name : repo_fullname, desc : repo_desc }, repo_fullname, function(err, body) {
+			dbCommon.insert(obj, name, function(err, body) {
 				if(!err) 
-					console.log("... Inserted/Updated #"+repo_id+" : "+repo_fullname);
+					console.log("... Inserted/Updated #"+obj.id+" : ");
 			});
 		}
 	});
+
 }
