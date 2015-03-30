@@ -5,23 +5,13 @@ var github = require('github-request');
 var dbConnect = require('./dbConnect.js');
 
 var dbRepo; 
-var dbCommon;
+var dbIssuesPR;
 
 (function() {
 	dbRepo = dbConnect.connectRepoList();
-	dbCommon = dbConnect.connectIssuesPR();
+	dbIssuesPR = dbConnect.connectIssuesPR();
 	checkRepo();
 })();
-
-
-//connects to the couchDb databases for storing data
-function connectCouch() {
-	nano.db.create('track_repo', function(err, body){;});
-	dbRepo = nano.use('track_repo');
-	
-	nano.db.create('track_issues', function(err, body){;});
-	dbCommon = nano.use('track_common');
-}
 
 //Main function for repository scrapping
 function checkRepo(currentpage) {

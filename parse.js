@@ -14,15 +14,6 @@ var dbIssuesPR;
 })();
 
 
-//connects to the couchDb databases for storing data
-function connectCouch() {
-	nano.db.create('track_repo', function(err, body){;});
-	dbRepo = nano.use('track_repo');
-
-	nano.db.create('track_issues', function(err, body){;});
-	dbIssuesPR = nano.use('track_issues');
-}
-
 function toTimestamp(sample) {
 	var date = sample.substring(0,10).split("-");
 	var time = sample.substring(11,19).split(":");
@@ -36,8 +27,8 @@ function fillCommon() {
 	dbRepo.list(function(err, data) {
 		repoList = data.rows;
 		len = data.total_rows;	
-		//continueScrap(repoList[44],0);
-		getHeadNumber(repoList[44]);
+		console.log("... Fetching data from "+repoList[3].id);
+		getHeadNumber(repoList[22]);
 	});
 }
 
@@ -50,16 +41,21 @@ function getHeadNumber(repo) {
     	path: pth
 	};
 
+	console.log("getting latest issue number...");
 	github.request(options, function(error, repos) {
+    	console.log(error);
     	if(!error) {
     		var obj = repos;
     		var num =  obj[0].number;
-    		dbIssuesPR.view('docNumber','trivial', { descending : true, limit : 1}, function(err, body) {
-    			if(body.rows.length == 0)
-    				var localHead = 0
-    			else
-    				var localHead = parseInt(body.rows[0].key);
+    		dbIssuesPR.view('docNumber','trivial', { descending : true, startkey : [repo.id,{}], endkey : [repo.id]}, function(err, body) {
     			
+
+    			var localHead = body.rows.length;
+    			//var localHead = body.rows[0].value.number;
+    			
+    			
+    			console.log(localHead);
+    			// set localHead to 0 to start a sequential fresh fetching.
     			startScrapRepo(repo.id,num,localHead);
     		});
     	}
@@ -68,9 +64,30 @@ function getHeadNumber(repo) {
 
 // Calculates no. of new Issue/PR not in database and initiates their fetching
 function startScrapRepo(repo,head,localHead) {
-	for(var i=head;i>localHead;i--) {
-		console.log("fetching issue #"+i);
-		scrapOne(repo,i);
+	if(head == localHead) {
+		console.log("Database up-to-date !!");
+	}
+
+	else {
+		console.log("Start fetching...");
+		if(localHead == 0) {
+			var dec = 1;
+			for(var i=1;i<=head;i++) {
+				setTimeout(function() {
+					console.log("fetching issue #"+dec);
+					scrapOne(repo,dec++);
+				}, (i)*500);		
+			}
+		}
+		else {
+			var dec = head;
+			for(var i=head;i>localHead;i--) {
+				setTimeout(function() {
+					console.log("fetching issue #"+dec);
+					scrapOne(repo,dec--);
+				}, (head-dec)*500);		
+			}
+		}
 	}
 }
 
@@ -141,18 +158,22 @@ function scrapOne(repo, number) {
 						is.base.label = obj.base.label;
 						is.base.ref = obj.base.ref;
 						is.base.sha = obj.base.sha;
-						is.base.user = {};
-						is.base.user.id = obj.base.user.id;
-						is.base.user.login = obj.base.user.login;
+						if(obj.base.user != null) {
+							is.base.user = {};
+							is.base.user.id = obj.base.user.id;
+							is.base.user.login = obj.base.user.login;
+						}
 						
 						is.head = {};
 						is.head.label = obj.head.label;
 						is.head.ref = obj.head.ref;
 						is.head.sha = obj.head.sha;
-						is.head.user = {};
-						is.head.user.id = obj.head.user.id;
-						is.head.user.login = obj.head.user.login;
-						
+						if(obj.head.user != null) {
+							is.head.user = {};
+							is.head.user.id = obj.head.user.id;
+							is.head.user.login = obj.head.user.login;
+						}
+
 						if(obj.merged) {
 							is.merged = obj.merged;
 							is.type += 1;
@@ -195,7 +216,7 @@ function fixIssuePR(obj) {
 		if(data == undefined) {
 			dbIssuesPR.insert(obj, name, function(err, body) {
 				if(!err) 
-					console.log("... Inserted/Updated #"+obj.id+" : ");
+					console.log("... Inserted/Updated #"+obj.number+" : ");
 			});
 		}
 	});

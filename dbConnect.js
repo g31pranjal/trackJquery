@@ -8,19 +8,25 @@ var docType = {
    "language": "javascript",
    "views": {
        "issue_open": {
-           "map": "function(doc) {\n  if(doc.type == 11)\n\temit(doc.id, doc)\n}"
+           "map": "function(doc) {\n  if(doc.type == 11)\n\temit([doc.repo, doc.id], doc)\n}"
        },
        "issue_closed": {
-           "map": "function(doc) {\n  if(doc.type == 12)\n\temit(doc.id, doc)\n}"
+           "map": "function(doc) {\n  if(doc.type == 12)\n\temit([doc.repo, doc.id], doc)\n}"
        },
        "PR_open": {
-           "map": "function(doc) {\n  if(doc.type == 21)\n\temit(doc.id, doc)\n}"
+           "map": "function(doc) {\n  if(doc.type == 21)\n\temit([doc.repo, doc.id], doc)\n}"
        },
        "PR_closed": {
-           "map": "function(doc) {\n  if(doc.type == 22)\n\temit(doc.id, doc)\n}"
+           "map": "function(doc) {\n  if(doc.type == 22)\n\temit([doc.repo, doc.id], doc)\n}"
        },
        "PR_merged": {
-           "map": "function(doc) {\n  if(doc.type == 23)\n\temit(doc.id, doc)\n}"
+           "map": "function(doc) {\n  if(doc.type == 23)\n\temit([doc.repo, doc.id], doc)\n}"
+       },
+       "open_all": {
+           "map": "function(doc) {\n  \tif(doc.type == 21 || doc.type == 11)\n\t\temit([doc.repo, doc.id], doc);\n}"
+       },
+       "closed_all": {
+           "map": "function(doc) {\n  \tif(!(doc.type == 21 || doc.type == 11))\n\t\temit([doc.repo, doc.id], doc);\n}"
        }
    }
 }; 
@@ -30,7 +36,7 @@ var docNumber = {
    "language": "javascript",
    "views": {
        "trivial": {
-           "map": "function(doc) {\n  if(doc.number)\n\temit(doc.number, doc)\n}"
+           "map": "function(doc) {\n  if(doc.number)\n\temit([doc.repo, doc.number], doc)\n}"
        }
    }
 };
