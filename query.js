@@ -15,7 +15,7 @@ var dbIssuesPR;
 
 
 function query() {
-	dbIssuesPR.view('docType','issue_open', { startkey : ["jquery/jquery"], endkey : ["jquery/jquery",{}] }, function(err, body) {
+	dbIssuesPR.view('docType','PR_closed', { startkey : ["jquery/jquery"], endkey : ["jquery/jquery",{}] }, function(err, body) {
 		console.log(body.rows.length);
 	});
 }

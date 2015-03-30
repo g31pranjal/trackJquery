@@ -27,8 +27,9 @@ function fillCommon() {
 	dbRepo.list(function(err, data) {
 		repoList = data.rows;
 		len = data.total_rows;	
-		console.log("... Fetching data from "+repoList[3].id);
+		console.log("... Fetching data from "+repoList[22].id);
 		getHeadNumber(repoList[22]);
+		//updateOpen(repoList[22])
 	});
 }
 
@@ -56,7 +57,7 @@ function getHeadNumber(repo) {
     			
     			console.log(localHead);
     			// set localHead to 0 to start a sequential fresh fetching.
-    			startScrapRepo(repo.id,num,localHead);
+    			startScrapRepo(repo.id,num,0);
     		});
     	}
 	});	
@@ -75,7 +76,7 @@ function startScrapRepo(repo,head,localHead) {
 			for(var i=1;i<=head;i++) {
 				setTimeout(function() {
 					console.log("fetching issue #"+dec);
-					scrapOne(repo,dec++);
+					scrapOne(repo,dec++, false);
 				}, (i)*500);		
 			}
 		}
@@ -84,7 +85,7 @@ function startScrapRepo(repo,head,localHead) {
 			for(var i=head;i>localHead;i--) {
 				setTimeout(function() {
 					console.log("fetching issue #"+dec);
-					scrapOne(repo,dec--);
+					scrapOne(repo,dec--, false);
 				}, (head-dec)*500);		
 			}
 		}
@@ -92,7 +93,7 @@ function startScrapRepo(repo,head,localHead) {
 }
 
 //fetches an Issue/PR
-function scrapOne(repo, number) {
+function scrapOne(repo, number, update) {
 	var pth = '/repos/'+repo+'/issues/'+number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
 	
 	var options = {
@@ -189,36 +190,79 @@ function scrapOne(repo, number) {
 						else {
 							is.merged = obj.merged;
 						}
-
-						fixIssuePR(is);
+						if(!update){
+							fixIssuesPR(is);
+						}
+						else {
+							updateIssuesPR(is)
+						}
 
 					}
 				});
 			    
 			}
 			else {
-				fixIssuePR(is);
+				if(!update) {
+					fixIssuesPR(is);
+				}
+				else {
+					updateIssuesPR(is)
+				}
 			}
-
-
-		
-				
     	}
-    	
 	});
 }
 
 // Checks whether a particular repository is in the dbRepo otherwise, adds it.
-function fixIssuePR(obj) {
+function fixIssuesPR(obj) {
 	var name = String(obj.id);
 	
-	dbIssuesPR.get(name, function(err, data, re) {
+	dbIssuesPR.get(name, function(err, data) {
 		if(data == undefined) {
 			dbIssuesPR.insert(obj, name, function(err, body) {
 				if(!err) 
-					console.log("... Inserted/Updated #"+obj.number+" : ");
+					console.log("... Inserted #"+obj.number+" : ");
+			});
+		}
+	});
+}
+
+function updateIssuesPR(obj) {
+	var name = String(obj.id);
+
+	dbIssuesPR.get(name, function(err, data) {
+		if(!err) {
+			obj._rev = data._rev;
+			dbIssuesPR.insert(obj, name, function(err, body) {
+				if(!err) 
+					console.log("... Updated #"+obj.number+" : ");
 			});
 		}
 	});
 
+	/*
+	dbIssuesPR.insert(obj, name, function(err, body) {
+		console.log(err);
+		if(!err) 
+
+			console.log("... Updated #"+obj.number+" : ");
+	});
+*/
+
+}
+
+function updateOpen(repo) {
+	console.log("... Beginning update for "+repo.id);
+	dbIssuesPR.view('docType','open_all', { descending : true, startkey : [repo.id,{}], endkey : [repo.id]}, function(err, body) {
+ 		var len = (body.rows.length);
+		for(var i=0;i<len;i++) {
+			var dec = 0;
+			setTimeout(function() {
+				console.log("fetching issue #"+body.rows[dec].value.number);
+				scrapOne(repo.id,body.rows[dec++].value.number, true);
+			}, (i)*500);
+		}
+		// set localHead to 0 to start a sequential fresh fetching.
+		//startScrapRepo(repo.id,num,localHead);
+	});
 }

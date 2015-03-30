@@ -17,7 +17,7 @@ var docType = {
            "map": "function(doc) {\n  if(doc.type == 21)\n\temit([doc.repo, doc.id], doc)\n}"
        },
        "PR_closed": {
-           "map": "function(doc) {\n  if(doc.type == 22)\n\temit([doc.repo, doc.id], doc)\n}"
+           "map": "function(doc) {\n  if(doc.type == 22 || doc.type == 23)\n\temit([doc.repo, doc.id], doc)\n}"
        },
        "PR_merged": {
            "map": "function(doc) {\n  if(doc.type == 23)\n\temit([doc.repo, doc.id], doc)\n}"
@@ -37,6 +37,20 @@ var docNumber = {
    "views": {
        "trivial": {
            "map": "function(doc) {\n  if(doc.number)\n\temit([doc.repo, doc.number], doc)\n}"
+       }
+   }
+};
+
+var docTime = {
+   "_id": "_design/docTime",
+   "_rev": "2-d7d12debaa6fd6e002eebe3fa04f0bac",
+   "language": "javascript",
+   "views": {
+       "created_at": {
+           "map": "function(doc) {\n\temit([doc.repo, doc.created_at], doc)\n}"
+       },
+       "updated_at": {
+           "map": "function(doc) {\n\temit([doc.repo, doc.updated_at], doc)\n}"
        }
    }
 };
@@ -91,6 +105,10 @@ function initializeIssuesPR() {
 			dbloc.insert(docNumber, function(err, body) {
 				if(!err)
 					console.log("... Created _design view : docNumber");
+			});
+			dbloc.insert(docTime, function(err, body) {
+				if(!err)
+					console.log("... Created _design view : docTime");
 			});
 		}
 	});
