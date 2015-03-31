@@ -10,12 +10,12 @@ var dbIssuesPR;
 (function() {
 	dbRepo = dbConnect.connectRepoList();
 	dbIssuesPR = dbConnect.connectIssuesPR();
-	fillCommon();
+	service();
 })();
 
 
 // 1.1 : Choses the repository to update its repository content
-function fillCommon() {
+function service() {
 	var repoList;
 	var len;
 
