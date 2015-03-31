@@ -15,7 +15,12 @@ var dbIssuesPR;
 
 
 function query() {
-	dbIssuesPR.view('docType','PR_closed', { startkey : ["jquery/jquery"], endkey : ["jquery/jquery",{}] }, function(err, body) {
+	dbIssuesPR.view('docType','issue_closed', { startkey : ["jquery/sizzle"], endkey : ["jquery/sizzle",{}] }, function(err, body) {
 		console.log(body.rows.length);
+		var len = body.rows.length;
+		for(var i=0;i<len;i++) {
+			console.log(body.rows[i].value.number);
+		}
+
 	});
 }

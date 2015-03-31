@@ -1,7 +1,7 @@
 var nano = require('nano')('http://localhost:5984');
 
 var dbRepo = 'track_repo'; 
-var dbIssuesPR = 'track_issues';
+var dbIssuesPR = 'track_issues_jquery';
 
 var docType = {
    "_id": "_design/docType",
@@ -43,7 +43,6 @@ var docNumber = {
 
 var docTime = {
    "_id": "_design/docTime",
-   "_rev": "2-d7d12debaa6fd6e002eebe3fa04f0bac",
    "language": "javascript",
    "views": {
        "created_at": {

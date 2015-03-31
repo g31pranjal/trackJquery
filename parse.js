@@ -27,27 +27,30 @@ function fillCommon() {
 	dbRepo.list(function(err, data) {
 		repoList = data.rows;
 		len = data.total_rows;	
-		console.log("... Fetching data from "+repoList[22].id);
-		getHeadNumber(repoList[22]);
-		//updateOpen(repoList[22])
+		console.log("... Starting fetch data Service ...");
+		//getHeadNumber(repoList[44]);
+		updateOpen(repoList[22])
 	});
 }
 
 // Getting the most recent Issue/PR on a repository
 function getHeadNumber(repo) {
-	var page_limit = 1;
-	var pth = '/repos/'+repo.id+'/issues?per_page='+page_limit+'&access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
+	console.log("... Fetching data from "+repo.id);
+	var pageLimit = 1;
+	var pth = '/repos/'+repo.id+'/issues?state=all&per_page='+pageLimit+'&access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
 
 	var options = {
     	path: pth
 	};
 
-	console.log("getting latest issue number...");
+	console.log("... getting latest issue number...");
 	github.request(options, function(error, repos) {
     	console.log(error);
     	if(!error) {
     		var obj = repos;
     		var num =  obj[0].number;
+    		console.log("... Latest Issue/PR available on Github : #"+num);
+
     		dbIssuesPR.view('docNumber','trivial', { descending : true, startkey : [repo.id,{}], endkey : [repo.id]}, function(err, body) {
     			
 
@@ -55,9 +58,9 @@ function getHeadNumber(repo) {
     			//var localHead = body.rows[0].value.number;
     			
     			
-    			console.log(localHead);
+    			console.log("... localHead : #"+localHead);
     			// set localHead to 0 to start a sequential fresh fetching.
-    			startScrapRepo(repo.id,num,0);
+    			startScrapRepo(repo.id,num,localHead);
     		});
     	}
 	});	
@@ -75,18 +78,18 @@ function startScrapRepo(repo,head,localHead) {
 			var dec = 1;
 			for(var i=1;i<=head;i++) {
 				setTimeout(function() {
-					console.log("fetching issue #"+dec);
+					console.log("... prepare fetching Issue/PR #"+dec);
 					scrapOne(repo,dec++, false);
 				}, (i)*500);		
 			}
 		}
 		else {
 			var dec = head;
-			for(var i=head;i>localHead;i--) {
+			for(var i=head,counter=0;i>localHead;i--,counter++) {
 				setTimeout(function() {
-					console.log("fetching issue #"+dec);
+					console.log("... prepare fetching Issue/PR #"+dec);
 					scrapOne(repo,dec--, false);
-				}, (head-dec)*500);		
+				}, (counter)*500);		
 			}
 		}
 	}
@@ -94,122 +97,127 @@ function startScrapRepo(repo,head,localHead) {
 
 //fetches an Issue/PR
 function scrapOne(repo, number, update) {
-	var pth = '/repos/'+repo+'/issues/'+number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
-	
-	var options = {
-	  path: pth,
-	};
+	dbIssuesPR.view('docNumber','trivial',{ key : [repo, number]}, function(err, data) {
+		if(data.rows.length == 0 || update == true) {
+			console.log("... fetching Issue/PR #"+number);
+		
+			var pth = '/repos/'+repo+'/issues/'+number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
+			
+			var options = {
+			  path: pth,
+			};
 
-	var is = {};
+			var is = {};
 
-	github.request(options, function(error, repos) {
-    	if(!error) {
-    		var obj = repos;
-    		
-			is.repo = repo;
-			is.id = obj.id;
-			is.number = obj.number;
-			is.title = obj.title;
-			is.user = {};
-			is.user.id = obj.user.id;
-			is.user.login = obj.user.login;
-			is.created_at = toTimestamp(obj.created_at);
-			is.updated_at = toTimestamp(obj.updated_at);
-			is.body = obj.body;
-			is.labels = [];
-			for(var i=0;i<obj.labels.length;i++) {
-				is.labels[i] = { name : obj.labels[i].name };
-			}
-			is.comments = obj.comments;
-			is.state = obj.state;
-			is.type = 11;
+			github.request(options, function(error, repos) {
+		    	if(!error) {
+		    		var obj = repos;
+		    		
+					is.repo = repo;
+					is.id = obj.id;
+					is.number = obj.number;
+					is.title = obj.title;
+					is.user = {};
+					is.user.id = obj.user.id;
+					is.user.login = obj.user.login;
+					is.created_at = toTimestamp(obj.created_at);
+					is.updated_at = toTimestamp(obj.updated_at);
+					is.body = obj.body;
+					is.labels = [];
+					for(var i=0;i<obj.labels.length;i++) {
+						is.labels[i] = { name : obj.labels[i].name };
+					}
+					is.comments = obj.comments;
+					is.state = obj.state;
+					is.type = 11;
 
-			if(obj.state == 'closed') {
-				is.type += 1;
-				is.closed_at = toTimestamp(obj.closed_at);
-				if(obj.closed_by != null) {
-					is.closed_by = {};
-					is.closed_by.id = obj.closed_by.id;
-					is.closed_by.login = obj.closed_by.login;
-				}
-				else 
-					is.closed_by = null
-			}
-			else {
-				is.closed_by = null;
-				is.closed_at = null;
-			}
-
-			if(obj.pull_request != null) {
-				var pth = '/repos/'+repo+'/pulls/'+number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
-	
-				var options = {
-				  path: pth,
-				};
-
-				github.request(options, function(error, data) {
-					if(!error) {
-						var obj = data;
-						is.pull_id = obj.id;
-						is.type += 10;
-						is.commits = obj.commits;
-						is.changed_files = obj.changed_files;
-						
-						is.base = {};
-						is.base.label = obj.base.label;
-						is.base.ref = obj.base.ref;
-						is.base.sha = obj.base.sha;
-						if(obj.base.user != null) {
-							is.base.user = {};
-							is.base.user.id = obj.base.user.id;
-							is.base.user.login = obj.base.user.login;
+					if(obj.state == 'closed') {
+						is.type += 1;
+						is.closed_at = toTimestamp(obj.closed_at);
+						if(obj.closed_by != null) {
+							is.closed_by = {};
+							is.closed_by.id = obj.closed_by.id;
+							is.closed_by.login = obj.closed_by.login;
 						}
-						
-						is.head = {};
-						is.head.label = obj.head.label;
-						is.head.ref = obj.head.ref;
-						is.head.sha = obj.head.sha;
-						if(obj.head.user != null) {
-							is.head.user = {};
-							is.head.user.id = obj.head.user.id;
-							is.head.user.login = obj.head.user.login;
-						}
+						else 
+							is.closed_by = null
+					}
+					else {
+						is.closed_by = null;
+						is.closed_at = null;
+					}
 
-						if(obj.merged) {
-							is.merged = obj.merged;
-							is.type += 1;
-							if(obj.merged_by != null) {
-								is.merged_by = {};
-								is.merged_by.id = obj.merged_by.id;
-								is.merged_by.login = obj.merged_by.login;
+					if(obj.pull_request != null) {
+						var pth = '/repos/'+repo+'/pulls/'+number+'?access_token=dabcd530d821ada1073be24d36b6c92d829457e8'
+			
+						var options = {
+						  path: pth,
+						};
+
+						github.request(options, function(error, data) {
+							if(!error) {
+								var obj = data;
+								is.pull_id = obj.id;
+								is.type += 10;
+								is.commits = obj.commits;
+								is.changed_files = obj.changed_files;
+								
+								is.base = {};
+								is.base.label = obj.base.label;
+								is.base.ref = obj.base.ref;
+								is.base.sha = obj.base.sha;
+								if(obj.base.user != null) {
+									is.base.user = {};
+									is.base.user.id = obj.base.user.id;
+									is.base.user.login = obj.base.user.login;
+								}
+								
+								is.head = {};
+								is.head.label = obj.head.label;
+								is.head.ref = obj.head.ref;
+								is.head.sha = obj.head.sha;
+								if(obj.head.user != null) {
+									is.head.user = {};
+									is.head.user.id = obj.head.user.id;
+									is.head.user.login = obj.head.user.login;
+								}
+
+								if(obj.merged) {
+									is.merged = obj.merged;
+									is.type += 1;
+									if(obj.merged_by != null) {
+										is.merged_by = {};
+										is.merged_by.id = obj.merged_by.id;
+										is.merged_by.login = obj.merged_by.login;
+									}
+									else 
+										is.merged_by = null
+									is.merged_at = toTimestamp(obj.merged_at);
+								}
+								else {
+									is.merged = obj.merged;
+								}
+								if(!update){
+									fixIssuesPR(is);
+								}
+								else {
+									updateIssuesPR(is)
+								}
+
 							}
-							else 
-								is.merged_by = null
-							is.merged_at = toTimestamp(obj.merged_at);
-						}
-						else {
-							is.merged = obj.merged;
-						}
-						if(!update){
+						});
+					}
+					else {
+						if(!update) {
 							fixIssuesPR(is);
 						}
 						else {
 							updateIssuesPR(is)
 						}
-
 					}
-				});
-			    
-			}
-			else {
-				if(!update) {
-					fixIssuesPR(is);
-				}
-				else {
-					updateIssuesPR(is)
-				}
-			}
-    	}
+		    	}
+			});
+		}
 	});
 }
 
@@ -239,16 +247,6 @@ function updateIssuesPR(obj) {
 			});
 		}
 	});
-
-	/*
-	dbIssuesPR.insert(obj, name, function(err, body) {
-		console.log(err);
-		if(!err) 
-
-			console.log("... Updated #"+obj.number+" : ");
-	});
-*/
-
 }
 
 function updateOpen(repo) {
@@ -262,7 +260,5 @@ function updateOpen(repo) {
 				scrapOne(repo.id,body.rows[dec++].value.number, true);
 			}, (i)*500);
 		}
-		// set localHead to 0 to start a sequential fresh fetching.
-		//startScrapRepo(repo.id,num,localHead);
 	});
 }
