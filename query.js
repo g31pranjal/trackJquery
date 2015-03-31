@@ -1,8 +1,7 @@
 var https = require('https');
 var fs = require('fs');
-var nano = require('nano')('http://localhost:5984');
-var github = require('github-request');
 var dbConnect = require('./dbConnect.js');
+var helper = require('./helper.js');
 
 var dbRepo; 
 var dbIssuesPR;
@@ -11,16 +10,30 @@ var dbIssuesPR;
 	dbRepo = dbConnect.connectRepoList();
 	dbIssuesPR = dbConnect.connectIssuesPR();
 	query();
+	//time();
 })();
 
 
 function query() {
-	dbIssuesPR.view('docType','issue_closed', { startkey : ["jquery/sizzle"], endkey : ["jquery/sizzle",{}] }, function(err, body) {
-		console.log(body.rows.length);
+	var design = 'docType';
+	var view = 'PR_closed';
+	var repo = 'jquery/jquery';
+
+	dbIssuesPR.view(design, view, { startkey : [repo], endkey : [repo,{}]}, function(err, body) {
 		var len = body.rows.length;
-		for(var i=0;i<len;i++) {
-			console.log(body.rows[i].value.number);
+		console.log(len);
+		for(var i=len-1;i>=0;i--) {
+			//console.log(body.rows[i].value.number+"  :  "+helper.toDate(body.rows[i].key[1]));
 		}
 
 	});
+}
+
+function time() {
+
+	var sample = "2015-03-31T05:06:04Z";
+
+	var date = sample.substring(0,10).split("-");
+	var time = sample.substring(11,19).split(":");
+	console.log (new Date(date[0], date[1], date[2], time[0], time[1], time[2])/1000);
 }
